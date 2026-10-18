@@ -1,0 +1,47 @@
+{
+  "DeepSeek": {
+    "provider": "deepseek",
+    "model": "deepseek-chat",
+    "base_url": "https://api.deepseek.com",
+    "key_env": "DEEPSEEK_API_KEY",
+    "protocol": "chat",
+    "timeout": 120,
+    "max_tokens": 5000,
+    "optional_params": {
+      "temperature": 0.7,
+      "response_format": {
+        "type": "json_object"
+      }
+    }
+  },
+  "OpenAI": {
+    "provider": "openai",
+    "model": "",
+    "base_url": "https://api.openai.com/v1",
+    "key_env": "OPENAI_API_KEY",
+    "protocol": "responses",
+    "timeout": 120,
+    "max_tokens": 5000,
+    "optional_params": {}
+  },
+  "Kimi": {
+    "provider": "kimi",
+    "model": "",
+    "base_url": "https://api.moonshot.cn/v1",
+    "key_env": "MOONSHOT_API_KEY",
+    "protocol": "chat",
+    "timeout": 120,
+    "max_tokens": 5000,
+    "optional_params": {}
+  },
+  "自定义兼容接口": {
+    "provider": "compatible",
+    "model": "",
+    "base_url": "",
+    "key_env": "CUSTOM_LLM_API_KEY",
+    "protocol": "chat",
+    "timeout": 120,
+    "max_tokens": 5000,
+    "optional_params": {}
+  }
+}

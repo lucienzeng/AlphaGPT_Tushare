@@ -6,3 +6,7 @@ tushare>=1.2.89
 pyyaml>=6.0
 openai>=1.0.0
 numexpr>=2.8.0
+scipy>=1.13.1
+streamlit>=1.37,<2
+plotly>=5.24,<7
+pyarrow>=18,<25

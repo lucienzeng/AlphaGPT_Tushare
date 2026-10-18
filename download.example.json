@@ -1,0 +1,14 @@
+{
+  "start": "2024-01-01",
+  "end": "2024-12-31",
+  "rpm": 30,
+  "endpoint_rpm": {},
+  "timeout": 30,
+  "retries": 3,
+  "repair": false,
+  "warmup_days": 250,
+  "metadata_ttl_hours": 24,
+  "row_limits": {},
+  "tail_days": 0,
+  "tail_check_hours": 24
+}

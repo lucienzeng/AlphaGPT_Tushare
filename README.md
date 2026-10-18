@@ -1,382 +1,108 @@
-# AlphaGPT - AI驱动的量化因子生成与回测系统
+# AlphaGPT 沪铜因子研究台
 
-受聚宽大佬**神启**启发，基于 DeepSeek AI 和 Tushare 数据源的量化因子生成和回测系统，支持 A 股市场的因子挖掘和策略回测。
+基于本地 AlphaGPT_Tushare 增量改造的日频研究 MVP：**数据处理 → 因子挖掘 → 回测**，通过三个中文页面操作。只连接 Tushare，默认用 DeepSeek 真实生成候选；同时提供 OpenAI、Kimi 与通用兼容接口适配。原始行情统一存储于SQLite，可通过DBeaver中文视图浏览；Parquet保留冻结快照与实验数据。原股票示例说明保存在 `docs/README_stock_legacy.md`。
 
-## 项目特点
-
-- 🤖 **AI驱动**: 使用 DeepSeek API 自动生成量化因子
-- 📊 **Tushare数据源**: 支持 A 股市场数据获取
-- 🎯 **多标的支持**: 支持同时对多个股票进行因子挖掘，提高因子泛化能力
-- 🔧 **统一配置**: YAML 配置文件，便于管理
-- 🔒 **安全性**: 支持环境变量管理敏感信息，使用 numexpr 安全计算
-- 📈 **完整回测**: 内置回测引擎，支持多种绩效指标
-- 📉 **IC分析**: 新增信息系数(IC)计算，评估因子预测能力
-- 🔬 **滚动指标**: 支持滚动IC/夏普分析，评估因子稳定性
-- 📊 **回撤分析**: 新增回撤曲线可视化
-- 🎨 **增强可视化**: 2x3布局图表，展示更多维度信息
-- 📁 **智能存储**: 按日期和股票代码自动组织结果文件
-- 🏗️ **模块化设计**: 清晰的代码结构，易于维护和扩展
-
-## 项目结构
-
-```
-alphagpt/
-├── src/alphagpt/
-│   ├── __init__.py
-│   ├── main.py              # 主程序入口
-│   ├── api/                 # API客户端模块
-│   │   ├── __init__.py
-│   │   └── deepseek_client.py
-│   ├── config/              # 配置模块
-│   │   ├── __init__.py
-│   │   └── settings.py
-│   ├── data/                # 数据处理模块
-│   │   ├── __init__.py
-│   │   ├── loader.py
-│   │   └── features.py
-│   ├── factor/              # 因子生成模块
-│   │   ├── __init__.py
-│   │   ├── generator.py
-│   │   ├── operators.py
-│   │   └── calculator.py    # 因子计算与评估
-│   ├── backtest/            # 回测模块
-│   │   ├── __init__.py
-│   │   └── engine.py        # 回测引擎、IC计算
-│   ├── visualization/       # 可视化模块
-│   │   ├── __init__.py
-│   │   └── plotter.py       # 2x3布局可视化
-│   └── utils/               # 工具模块
-│       ├── __init__.py
-│       ├── logger.py
-│       ├── seed.py
-│       ├── constants.py
-│       ├── output.py        # 输出目录管理
-│       └── validators.py
-├── pyproject.toml           # 项目配置文件
-└── README.md                # 项目文档
-```
-
-## 安装
-
-### 使用 pip
+## 安装与启动
 
 ```bash
-pip install -e .
+cd /Users/lucienzeng/Documents/ChatGPT/期货因子挖掘/AlphaGPT_Tushare
+uv sync --python 3.12 --extra dev --locked
+zsh scripts/start.sh
 ```
 
-或手动安装依赖：
+打开 http://127.0.0.1:8501 。服务仅监听本机，控制台错误追加到 `runtime/logs/server.log`。使用 Ctrl+C 停止服务。
+
+配置模板为 `.env.example`、`models.example.json`、`download.example.json` 和 `experiment.example.json`；后者绑定本次真实快照，在其他机器使用时需换成当地快照ID。模型样例复制为 `models.json` 后可编辑；密钥变量仍从环境读取。
+
+项目使用 `.python-version` 中的 Python 3.12 和 `uv.lock`。系统 Conda Python 3.13 曾在 `readline` 原生模块导入时崩溃，因此不要用它替代项目 `.venv/bin/python` 运行测试。
+
+程序先读取环境变量，未继承时从受控 zsh 加载现有 `~/.zshrc`，包括未 export 的变量；只提取 `TUSHARE_TOKEN`、`DEEPSEEK_API_KEY`、`OPENAI_API_KEY`、`MOONSHOT_API_KEY`，不回显值、不修改 shell 配置、不复制到项目文件。也可在启动前自行 export 自定义供应商环境变量。状态栏只显示是否已加载。
+
+## 三个页面
+
+### 数据同步
+
+选择开始/结束日期，点击“开始下载 / 增量同步”。默认额外下载250日历天用于特征预热；结束日期必须早于今天。核心为 CU 合约信息、期货日历、主力映射、真实月合约日线、涨跌停/保证金与结算参数。
+
+下载清单按接口、合约和日期记录覆盖；原始行情和覆盖状态在同一SQLite事务中提交。首次使用自动从本地旧文件迁移，已有数据无需重新下载。同样的完整历史再次同步，行情请求为零；元数据有24小时缓存。普通同步只补新增和缺口。勾选“修复选定区间”会明确重拉选定范围及预热范围，但不会改变旧数据快照。空响应不当作成功覆盖，缺口保留，失败和停止后可从已完成分段恢复。
+
+默认单执行器、并发1、账号预算30次/分，这是研发默认而非账号权限保证。高级设置可覆盖每接口频次；实际使用账号与接口中更低的上限。返回达到接口行数上限时递归细分日期。高级设置可收紧单次行数保护值，并设置尾部复查范围与最短间隔；默认关闭尾部复查。网络临时错误有限退避；权限、参数、Token和IP数量限制快速失败。未提供自动换代理或IP功能。
+
+传输复用官方 SDK `DataApi` 查询协议，通过官方 HTTPS REST 端点与持久化 Session 请求，并显式检查 HTTP 和业务错误，避免 SDK 旧传输把非2xx响应当空表。此次曾出现“IP数量超限”，单日对照复测成功后改用持久连接继续；诊断日志位于 `runtime/logs/tushare_diagnostic.jsonl`，不据此宣称已经证明其账号侧根因。
+
+### 因子挖掘
+
+默认 DeepSeek `deepseek-chat`，使用现有凭据。OpenAI/Kimi 模型 ID 由用户填写实际可用值；OpenAI 默认 Responses 协议，Kimi/DeepSeek 默认 Chat Completions。可选参数 JSON 按供应商能力配置，不盲目给所有模型发送相同的 temperature、reasoning 或 JSON 参数。可测试连接并把非敏感配置保存到本地 `models.json`。
+
+选择数据快照和训练/验证/测试日期，配置轮数、每轮数量、调用与Token预算。默认1轮10个；真实联调使用1轮3个。第一轮生成，之后仅使用训练/验证反馈优化。JSON解析最多修复两次，失败响应保留；不悄悄切模型或换成人工公式。
+
+18类候选特征使用严格历史滚动标准化；开发区低覆盖或近常数特征不供模型选择。量和持仓的相对变化先在真实月合约内计算，并在2020统计口径切换处重新预热，避免把主力迁移或单双边变化直接当信号。原始 vol/oi 不被一概除二。
+
+模型只输出白名单数学表达式及中文逻辑，不执行任意 Python。每个合格候选必须解释输入、算子、预期方向、适用条件和失效风险。界面和导出另附按公式生成的中文计算释义，提醒标准分与负权重的含义；模型经济叙述仍需人工审查。语法不合法、覆盖不足、近常数、表达式重复或开发区相关性超限会淘汰，并展示原因。
+
+参数在提交时冻结；修改表单不会改变运行任务。停止在当前请求/因子结束的安全边界生效；已发模型请求可能仍产生费用。已保存因子调成本重新回测不再调用模型。原始模型响应、完整提示词及用量都保存在本地研究日志和元数据库中，未配置可靠价格时不虚构成本估算。
+
+### 回测结果
+
+默认表格按验证夏普排序。可查看每个因子的中文逻辑、公式、失效条件、冻结参数、成本前后净值、回撤、因子值、持仓、滚动IC、月度/年度表现、年度成本、成交及未成交明细。每个成本重算生成独立实验，原记录不覆盖。支持少量实验的验证净值比较和 ZIP 导出。
+
+最终测试通过“冻结此版本并运行最终测试”独立触发，留下解封记录。开发实验文件只保存开发区因子值和标签；测试结果不会反馈模型。查看测试后继续调参，不得把同一段历史继续称为未见样本。
+
+## 成交、换月和指标口径
+
+- 信号用逐次链式复权价格；成交与结算用真实月合约价格。复权只使用换月时已经知道的新旧合约同日价比，追加未来数据不重写过去。
+- 默认 `decision_lag=2`：t日完整数据在t+2交易日首个时段开盘执行，以保守处理历史主力映射/数据发布时间无法完全证实的问题。这里交易日包括夜盘，不把“下一开盘”误当下一自然日上午。用户把延迟改为1时须自行核实所需数据在此前可得。
+- 决策时确定手数；成交时复核资金和保证金预算。旧合约平仓失败时不再开新约。交割月和到期前缓冲期退出；每日检查保证金，超预算在下一可成交时点减仓。
+- 每日盈亏=旧持仓从昨结算至今开盘的变化＋开盘调整后持仓从今开盘至今结算的变化－费用－滑点。滑点已在参考开盘价基础上单独计入，不能再从成交价重复扣。
+- 默认手续费是单边成交额费率0.00005，单边滑点1tick；它们是可编辑研究假设，不是用户真实账户报价。样本末端按结算权益报告，未另加终止平仓；非零持仓的最终平仓成本不在样本指标内。也支持单边元/手。历史费率两种口径同时非零或缺失时拒绝猜测；本策略不在同一交易日内开平，平今规则不用于日内策略结论。额外期货公司费用单独配置。
+- `per_unit` 来自实际合约信息；tick默认10元/吨，必须在研究时核实合约规则。缺保证金率时使用明确配置的保守20%假设。涨跌停方向限制采用保守不成交；日线不模拟盘口排队、日内止损或日内强平路径。
+- 夏普为日收益均值/样本标准差×√252；年化收益为CAGR；回撤包含初始净值1。胜率为非零毛盈亏交易日中净盈利占比，不是完整持仓交易胜率；交易次数为成交明细笔数。
+- 时间序列IC对齐决策后延迟开盘至再下一开盘的同一真实合约收益，分段末尾标签被截断，避免跨区间偷看。它是价格预测诊断，未纳入完整成交约束及费用，最终以净账户回测评估。滚动图为40日 Pearson IC；Rank IC是分段 Spearman。样本不足显示不可计算。
+- 训练、验证各从指定研究资金起算，测试作为冻结策略独立回放；它们不拼成连续实盘账户。信号指标可读取过去的预热数据，不能读取未来价格计算阈值。2026已有历史也不等于事前记录的前向模拟。
+
+## 文件与日志
+
+```text
+app.py                         三个中文页面
+src/alphagpt/data/futures.py    数据接入、限流、覆盖与快照
+src/alphagpt/data/sqlite.py     六类原始业务表、原子写入、迁移和中文视图
+src/alphagpt/factor/research.py 因果特征、表达式、中文解析校验
+src/alphagpt/backtest/futures.py真实合约账本与指标
+src/alphagpt/api/models.py      DeepSeek/OpenAI/Kimi适配
+src/alphagpt/research/          配置、存储、任务、编排、CLI和验收
+runtime/research.sqlite        原始行情、任务、覆盖清单、模型响应、因子和实验
+runtime/cache/                 保留的迁移前旧缓存，已停止更新
+runtime/backups/               SQLite与旧缓存的迁移备份
+runtime/snapshots/             不可变数据快照
+runtime/experiments/           因子值、分段账本、成交、标签、manifest
+runtime/logs/<task_id>.jsonl    完整任务事件、请求参数、模型响应、错误堆栈
+runtime/logs/server.log        界面服务日志
+runtime/verification/          测试日志、JUnit、真实验收报告与ZIP
+```
+
+原始行情现已统一迁入SQLite；[SQLite与DBeaver使用说明](docs/SQLite与DBeaver.md)包含连接步骤、中文视图、SQL查询、备份和迁移验证。
+
+[数据库设计说明](docs/数据库设计说明.md)包含实际表关系、完整字段字典、主连与月份合约对照、因子与实验关系；配套[关系查询 SQL](docs/数据库关系查询.sql)可直接在 DBeaver 中执行。
+
+运行目录默认在项目内，`ALPHAGPT_RUNTIME` 可切换到独立目录。日志UTC时间带时区；任务ID为本机时间。真实凭据会从持久化内容中脱敏；runtime和模型本地配置不提交Git。数据快照绑定内容哈希；代码绑定Git HEAD和源文件内容哈希。
+
+同一个 runtime 只允许一个研究执行器，避免CLI和UI同时突破下载预算。浏览器刷新只读取状态，不重发任务；服务运行时关闭页面不终止任务。服务重启后未完成任务标记中断，可手动恢复，不能恢复已消失的内存调用。模型已返回的轮次和已经评估的候选会被复用。
+
+## 命令行与验证
+
+关闭界面服务后，在同一项目中执行：
 
 ```bash
-pip install -r requirements.txt
+.venv/bin/python -m alphagpt.main doctor
+.venv/bin/python -m alphagpt.main migrate-data
+.venv/bin/python -m alphagpt.main sync --start 2024-01-01 --end 2024-12-31 --rpm 30
+.venv/bin/python -m alphagpt.main smoke
+.venv/bin/python -m alphagpt.main mine --config runtime/verification/smoke_config.json
+.venv/bin/python -m alphagpt.main resume <任务ID>
+.venv/bin/python -m alphagpt.main final-test <开发实验ID>
+.venv/bin/python scripts/verify.py
 ```
 
-或单独安装：
+`smoke` 使用最近的真实快照：验证重复同步零请求，生成3个真实模型候选，评估基线和候选，成本加倍新建实验，冻结验证区优胜版本运行独立测试，检查真实换月交易并导出日志和结果。它会解封该版本的测试区；不要随后拿这份测试调参还宣称独立。
 
-```bash
-pip install numpy pandas matplotlib scipy requests tushare pyyaml openai numexpr
-```
-
-## 配置
-
-### 1. 配置敏感信息（推荐使用环境变量）
-
-**方式一：使用环境变量（推荐，更安全）**
-
-```bash
-# 复制环境变量模板
-cp .env.example .env
-
-# 编辑 .env 文件，填入真实的密钥
-# TUSHARE_TOKEN=your_real_token
-# DEEPSEEK_API_KEY=your_real_api_key
-```
-
-**方式二：使用配置文件**
-
-```bash
-# 复制配置文件模板
-cp config.yaml.example config.yaml
-
-# 编辑 config.yaml，填入真实的密钥
-```
-
-### 2. 编辑配置文件
-
-编辑项目根目录下的 `config.yaml` 文件：
-
-```yaml
-# Tushare API 配置
-tushare:
-  token: "your_tushare_token_here"  # 在 https://tushare.pro 注册获取
-
-# 数据配置
-data:
-  # 单个股票
-  ts_code: "000001.SZ"      # 股票代码（平安银行）
-
-  # 或使用多个股票（推荐，提高因子泛化能力）
-  ts_codes: ["600519.SH", "000001.SZ", "600036.SH"]  # 多个股票代码列表
-
-  start_date: "20200101"    # 开始日期 YYYYMMDD
-  end_date: "20231231"      # 训练集结束日期 YYYYMMDD
-  test_end: "20251231"      # 测试集结束日期 YYYYMMDD
-
-# 因子生成配置
-factor:
-  max_seq_len: 6            # 最大序列长度
-  min_op_count: 2           # 最小操作数
-  num_factors: 10           # 生成因子数量
-
-# DeepSeek API 配置
-deepseek:
-  api_key: "your_deepseek_api_key_here"
-  base_url: "https://api.deepseek.com"
-  model: "deepseek-chat"    # 或 deepseek-reasoner
-  timeout: 60               # API 超时时间（秒）
-  temperature: 0.7          # 生成温度
-
-# 回测配置
-backtest:
-  position_scale: 0.3       # 仓位比例
-
-# 日志配置
-logging:
-  level: "INFO"             # 日志级别: DEBUG, INFO, WARNING, ERROR
-  log_file: "logs/alphagpt.log"
-
-# 随机种子
-random_seed: 42
-```
-
-### 3. 获取 Tushare Token
-
-1. 访问 [Tushare Pro](https://tushare.pro/register) 注册账号
-2. 在个人中心获取 API Token
-3. 将 Token 填入 `config.yaml` 文件
-
-### 4. 股票代码格式
-
-Tushare 使用以下股票代码格式：
-
-| 交易所 | 代码后缀 | 示例 |
-|--------|----------|------|
-| 上海证券交易所 | .SH | 600000.SH |
-| 深圳证券交易所 | .SZ | 000001.SZ |
-| 北京证券交易所 | .BJ | 430047.BJ |
-
-### 5. 多标的配置（推荐）
-
-支持同时对多个股票进行因子挖掘，提高因子的泛化能力：
-
-```yaml
-data:
-  ts_codes: ["600519.SH", "000001.SZ", "600036.SH"]  # 多个股票代码列表
-```
-
-**优势**：
-- 提高因子泛化能力，避免过拟合单一标的
-- 增加训练数据量，提升因子稳定性
-- 适用于跨标的策略开发
-
-## 使用方法
-
-### 命令行运行
-
-```bash
-# 运行完整的因子生成和回测
-python -m alphagpt.main
-
-# 或运行示例
-python example.py
-```
-
-### 作为模块使用
-
-```python
-from alphagpt.config import Config
-from alphagpt.data import DataLoader, FeatureEngineer
-from alphagpt.factor import FactorGenerator
-
-# 从 YAML 加载配置
-config = Config.from_yaml('config.yaml')
-
-# 加载数据
-df = DataLoader.get_price_data(
-    ts_code=config.ts_code,
-    start=config.start_date,
-    end=config.end_date,
-    tushare_token=config.tushare_token
-)
-
-# 特征工程
-df, features = FeatureEngineer.create_features(df)
-
-# 生成因子
-generator = FactorGenerator(
-    api_key=config.api_key,
-    base_url=config.base_url,
-    model=config.model
-)
-factors = generator.generate_factors_with_deepseek(features)
-```
-
-## 模块说明
-
-### API模块 (`api/`)
-- `DeepSeekClient`: DeepSeek API客户端，处理API调用和重试逻辑
-
-### 配置模块 (`config/`)
-- `Config`: 集中管理所有配置参数，支持从 YAML 文件加载
-
-### 数据模块 (`data/`)
-- `DataLoader`: 数据加载器，支持从 Tushare 获取股票数据
-- `FeatureEngineer`: 特征工程，创建技术指标特征
-
-### 因子模块 (`factor/`)
-- `FactorGenerator`: 因子生成器，使用AI生成因子表达式
-- `FactorOperators`: 定义因子算子（ADD, SUB, MUL等）
-- `FactorCalculator`:
-  - 计算因子值和夏普比率
-  - `evaluate_factor()`: 统一评估方法，使用滚动窗口归一化避免前视偏差
-  - 支持IC计算
-
-### 回测模块 (`backtest/`)
-- `BacktestEngine`:
-  - 回测引擎，计算策略绩效指标
-  - 使用滚动窗口归一化（避免前视偏差）
-  - `calculate_ic()`: 计算信息系数（IC）
-  - `calculate_rolling_ic()`: 计算滚动IC
-
-### 可视化模块 (`visualization/`)
-- `ResultPlotter`:
-  - 2x3布局增强可视化
-  - 净值曲线、回撤曲线、滚动IC/夏普
-  - 月度收益、仓位变化、绩效指标表
-  - `plot_factor_correlation()`: 因子相关性热力图（可选）
-
-### 工具模块 (`utils/`)
-- `setup_logger`: 日志配置
-- `set_seed`: 随机种子设置
-- `create_run_output_dir`: 创建按日期和股票代码组织的输出目录
-
-## 输出结果
-
-### 目录结构
-
-程序运行后会自动创建以下目录结构：
-
-```
-results/
-├── 2026-01-25/              # 日期子文件夹
-│   ├── 600519.SH_000001.SZ/ # 股票代码子文件夹
-│   │   ├── performance.png  # 绩效图表（2x3布局）
-│   │   └── summary.csv      # 结果汇总（含IC）
-│   └── 600028.SH/
-│       ├── performance.png
-│       └── summary.csv
-└── 2026-01-24/              # 历史运行记录
-    └── ...
-```
-
-### 输出文件说明
-
-1. **日志文件**: `logs/alphagpt.log` - 完整的运行日志，包含：
-   - 配置信息（股票代码、日期范围、因子数量等）
-   - 数据加载和特征工程详情
-   - 生成的因子表达式列表
-   - 每个因子的训练集/测试集评估结果（含IC）
-   - 最佳因子的完整绩效指标
-
-2. **绩效图表**: `results/YYYY-MM-DD/股票代码/performance.png`
-   - 净值曲线对比
-   - 回撤曲线
-   - 滚动IC/夏普双轴图
-   - 月度收益
-   - 仓位变化
-   - 绩效指标汇总表
-
-3. **结果CSV**: `results/YYYY-MM-DD/股票代码/summary.csv`
-   - 因子名称、表达式
-   - 夏普比率、IC、年化收益
-   - 最大回撤、信息比率、胜率、卡玛比率
-
-### 日志示例
-
-```
-2026-01-25 17:01:17 - AlphaGPT 量化因子生成与回测系统启动
-2026-01-25 17:01:17 - 配置信息:
-2026-01-25 17:01:17 -   - 股票代码: ['600028.SH']
-2026-01-25 17:01:17 -   - 因子生成数量: 10
-2026-01-25 17:01:17 - 开始加载数据...
-2026-01-25 17:01:17 - 特征工程完成: 生成 88 个特征
-2026-01-25 17:02:28 - 成功生成 10 个因子表达式:
-2026-01-25 17:02:28 -   Factor_1: ABS(ret_norm) + mom5_norm
-2026-01-25 17:02:28 - 评估 Factor_1: ABS(ret_norm) + mom5_norm
-2026-01-25 17:02:28 -   训练集夏普比率: -0.087
-2026-01-25 17:02:28 -   测试集夏普比率: 0.173, IC: 0.045
-2026-01-25 17:02:28 -   年化收益: 0.97%
-2026-01-25 17:02:28 - 最佳因子: Factor_3
-2026-01-25 17:02:28 - 表达式: NEG(ret5_norm) * SQRT(vol_chg_norm)
-2026-01-25 17:02:28 -   夏普比率: 1.391
-2026-01-25 17:02:28 -   信息系数(IC): 0.082
-2026-01-25 17:02:28 -   年化收益率: 9.25%
-```
-
-## 新增功能
-
-### IC（信息系数）分析
-- 衡量因子值与未来收益的相关性
-- IC值越接近1或-1，因子预测能力越强
-- 支持滚动IC分析，评估因子稳定性
-
-### 回撤曲线
-- 可视化策略回撤过程
-- 标注最大回撤位置
-- 填充回撤区域，直观展示风险
-
-### 滚动指标分析
-- 滚动IC：评估因子预测能力的时间稳定性
-- 滚动夏普：评估策略表现的时间稳定性
-- 双轴图展示，便于对比分析
-
-### 智能存储结构
-- 按日期自动归档，便于历史对比
-- 按股票代码分组，避免文件混乱
-- 简化文件名，目录包含完整信息
-
-## 常见问题
-
-### 1. Tushare Token 未配置
-
-如果未配置 Token，系统会使用模拟数据。请在 `config.yaml` 中配置有效的 Tushare Token。
-
-### 2. 数据获取失败
-
-- 检查网络连接
-- 确认 Token 是否有效
-- 检查股票代码格式是否正确
-- 确认日期范围是否合理
-
-### 3. API 调用失败
-
-- 检查 DeepSeek API Key 是否有效
-- 确认网络可以访问 API 服务
-- 可以在配置中设置使用本地因子生成
-
-### 4. IC值为NaN
-
-- 可能是样本量不足
-- 检查数据质量
-- 确保因子值和收益率长度匹配
-
-## 许可证
-
-MIT License
-
-## 贡献
-
-欢迎提交Issue和Pull Request！
-
-## 联系方式
-
-如有问题，请提交Issue或联系项目维护者。
+`scripts/verify.py` 将所有离线正确性测试完整输出保存为日志及JUnit。合成数据只存在隔离测试目录，不进入正常真实数据页面。实际已验证状态、样例运行ID和截图请查看 `docs/VALIDATION.md`。本项目完成研究工具不代表已经找到有效或可实盘部署的策略。

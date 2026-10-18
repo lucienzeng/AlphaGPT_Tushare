@@ -53,3 +53,8 @@ Thumbs.db
 
 # uv
 .uv/
+runtime/
+.claude/
+models.json
+.pytest_cache/
+!tests/fixtures/*.csv

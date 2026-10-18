@@ -1,0 +1,1949 @@
+{
+  "captured_at_utc": "2026-10-18T05:53:49.521506+00:00",
+  "database": "runtime/research.sqlite",
+  "objects": {
+    "contracts": {
+      "type": "table",
+      "sql": "CREATE TABLE contracts (\"ts_code\" TEXT NOT NULL,\"symbol\" TEXT,\"exchange\" TEXT,\"name\" TEXT,\"fut_code\" TEXT,\"trade_unit\" TEXT,\"quote_unit\" TEXT,\"quote_unit_desc\" TEXT,\"d_mode_desc\" TEXT,\"list_date\" TEXT,\"delist_date\" TEXT,\"d_month\" TEXT,\"last_ddate\" TEXT,\"trade_time_desc\" TEXT,\"multiplier\" REAL,\"per_unit\" REAL,_scope TEXT NOT NULL,_updated_at TEXT NOT NULL,_source_task TEXT,PRIMARY KEY (\"ts_code\"))",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "ts_code",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "symbol",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "exchange",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "fut_code",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "trade_unit",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "quote_unit",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "quote_unit_desc",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "d_mode_desc",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "list_date",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 10,
+          "name": "delist_date",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 11,
+          "name": "d_month",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 12,
+          "name": "last_ddate",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 13,
+          "name": "trade_time_desc",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 14,
+          "name": "multiplier",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 15,
+          "name": "per_unit",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 16,
+          "name": "_scope",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 17,
+          "name": "_updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 18,
+          "name": "_source_task",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 392,
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "idx_contracts_scope",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        },
+        {
+          "seq": 1,
+          "name": "sqlite_autoindex_contracts_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    "coverage": {
+      "type": "table",
+      "sql": "CREATE TABLE coverage(dataset TEXT,symbol TEXT,day TEXT,version TEXT,PRIMARY KEY(dataset,symbol,day))",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "dataset",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "symbol",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 2
+        },
+        {
+          "cid": 2,
+          "name": "day",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 3
+        },
+        {
+          "cid": 3,
+          "name": "version",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 28375,
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_coverage_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    "daily_bars": {
+      "type": "table",
+      "sql": "CREATE TABLE daily_bars (\"ts_code\" TEXT NOT NULL,\"trade_date\" TEXT NOT NULL,\"pre_close\" REAL,\"pre_settle\" REAL,\"open\" REAL,\"high\" REAL,\"low\" REAL,\"close\" REAL,\"settle\" REAL,\"change1\" REAL,\"change2\" REAL,\"vol\" REAL,\"amount\" REAL,\"oi\" REAL,\"oi_chg\" REAL,\"delv_settle\" REAL,_scope TEXT NOT NULL,_updated_at TEXT NOT NULL,_source_task TEXT,PRIMARY KEY (\"ts_code\",\"trade_date\"))",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "ts_code",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "trade_date",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 2
+        },
+        {
+          "cid": 2,
+          "name": "pre_close",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "pre_settle",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "open",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "high",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "low",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "close",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "settle",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "change1",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 10,
+          "name": "change2",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 11,
+          "name": "vol",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 12,
+          "name": "amount",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 13,
+          "name": "oi",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 14,
+          "name": "oi_chg",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 15,
+          "name": "delv_settle",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 16,
+          "name": "_scope",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 17,
+          "name": "_updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 18,
+          "name": "_source_task",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 8939,
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "idx_daily_bars_date",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        },
+        {
+          "seq": 1,
+          "name": "idx_daily_bars_scope",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        },
+        {
+          "seq": 2,
+          "name": "sqlite_autoindex_daily_bars_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    "data_gaps": {
+      "type": "table",
+      "sql": "CREATE TABLE data_gaps(\n                    dataset TEXT NOT NULL, symbol TEXT NOT NULL, day TEXT NOT NULL,\n                    reason TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'open',\n                    first_seen TEXT NOT NULL, last_seen TEXT NOT NULL,\n                    attempts INTEGER NOT NULL DEFAULT 1, source_task TEXT,\n                    resolved_at TEXT, PRIMARY KEY(dataset,symbol,day))",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "dataset",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "symbol",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 2
+        },
+        {
+          "cid": 2,
+          "name": "day",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 3
+        },
+        {
+          "cid": 3,
+          "name": "reason",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "status",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": "'open'",
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "first_seen",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "last_seen",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "attempts",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": "1",
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "source_task",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "resolved_at",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 113,
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_data_gaps_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    "events": {
+      "type": "table",
+      "sql": "CREATE TABLE events(seq INTEGER PRIMARY KEY AUTOINCREMENT,task TEXT,time TEXT,event TEXT,payload TEXT)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "seq",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "task",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "time",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "event",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "payload",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 2728,
+      "foreign_keys": [],
+      "indexes": []
+    },
+    "main_mapping": {
+      "type": "table",
+      "sql": "CREATE TABLE main_mapping (\"ts_code\" TEXT NOT NULL,\"trade_date\" TEXT NOT NULL,\"mapping_ts_code\" TEXT,_scope TEXT NOT NULL,_updated_at TEXT NOT NULL,_source_task TEXT,PRIMARY KEY (\"ts_code\",\"trade_date\"))",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "ts_code",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "trade_date",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 2
+        },
+        {
+          "cid": 2,
+          "name": "mapping_ts_code",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "_scope",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "_updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "_source_task",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 840,
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "idx_main_mapping_date",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        },
+        {
+          "seq": 1,
+          "name": "idx_main_mapping_scope",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        },
+        {
+          "seq": 2,
+          "name": "sqlite_autoindex_main_mapping_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    "market_catalog": {
+      "type": "table",
+      "sql": "CREATE TABLE market_catalog(\n                    dataset TEXT NOT NULL, symbol TEXT NOT NULL, schema_json TEXT NOT NULL,\n                    row_count INTEGER NOT NULL, updated_at TEXT NOT NULL, source_task TEXT,\n                    PRIMARY KEY(dataset,symbol))",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "dataset",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "symbol",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 2
+        },
+        {
+          "cid": 2,
+          "name": "schema_json",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "row_count",
+          "type": "INTEGER",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "source_task",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 127,
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_market_catalog_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    "market_migrations": {
+      "type": "table",
+      "sql": "CREATE TABLE market_migrations(\n                    name TEXT PRIMARY KEY, completed_at TEXT NOT NULL, report_json TEXT NOT NULL)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "completed_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "report_json",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 1,
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_market_migrations_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    "objects": {
+      "type": "table",
+      "sql": "CREATE TABLE objects(kind TEXT,id TEXT,created TEXT,payload TEXT,PRIMARY KEY(kind,id))",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "kind",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 2
+        },
+        {
+          "cid": 2,
+          "name": "created",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "payload",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 37,
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_objects_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    "price_limits": {
+      "type": "table",
+      "sql": "CREATE TABLE price_limits (\"ts_code\" TEXT NOT NULL,\"trade_date\" TEXT NOT NULL,\"name\" TEXT,\"up_limit\" REAL,\"down_limit\" REAL,\"m_ratio\" REAL,\"cont\" TEXT,\"exchange\" TEXT,_scope TEXT NOT NULL,_updated_at TEXT NOT NULL,_source_task TEXT,PRIMARY KEY (\"ts_code\",\"trade_date\"))",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "ts_code",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "trade_date",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 2
+        },
+        {
+          "cid": 2,
+          "name": "name",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "up_limit",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "down_limit",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "m_ratio",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "cont",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "exchange",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "_scope",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "_updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 10,
+          "name": "_source_task",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 8719,
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "idx_price_limits_date",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        },
+        {
+          "seq": 1,
+          "name": "idx_price_limits_scope",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        },
+        {
+          "seq": 2,
+          "name": "sqlite_autoindex_price_limits_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    "settlement_params": {
+      "type": "table",
+      "sql": "CREATE TABLE settlement_params (\"ts_code\" TEXT NOT NULL,\"trade_date\" TEXT NOT NULL,\"exchange\" TEXT,\"settle\" REAL,\"trading_fee_rate\" REAL,\"trading_fee\" REAL,\"delivery_fee\" REAL,\"b_hedging_margin_rate\" REAL,\"s_hedging_margin_rate\" REAL,\"long_margin_rate\" REAL,\"short_margin_rate\" REAL,\"offset_today_fee\" REAL,_scope TEXT NOT NULL,_updated_at TEXT NOT NULL,_source_task TEXT,PRIMARY KEY (\"ts_code\",\"trade_date\"))",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "ts_code",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "trade_date",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 2
+        },
+        {
+          "cid": 2,
+          "name": "exchange",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "settle",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "trading_fee_rate",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "trading_fee",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "delivery_fee",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "b_hedging_margin_rate",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "s_hedging_margin_rate",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "long_margin_rate",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 10,
+          "name": "short_margin_rate",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 11,
+          "name": "offset_today_fee",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 12,
+          "name": "_scope",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 13,
+          "name": "_updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 14,
+          "name": "_source_task",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 8606,
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "idx_settlement_params_date",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        },
+        {
+          "seq": 1,
+          "name": "idx_settlement_params_scope",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        },
+        {
+          "seq": 2,
+          "name": "sqlite_autoindex_settlement_params_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    "tasks": {
+      "type": "table",
+      "sql": "CREATE TABLE tasks(id TEXT PRIMARY KEY,kind TEXT,status TEXT,created TEXT,updated TEXT,\n                fingerprint TEXT,params TEXT,payload TEXT,cancel INTEGER DEFAULT 0)",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "id",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "kind",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "status",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "created",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "updated",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "fingerprint",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "params",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "payload",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "cancel",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": "0",
+          "pk": 0
+        }
+      ],
+      "row_count": 20,
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "sqlite_autoindex_tasks_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    "trade_calendar": {
+      "type": "table",
+      "sql": "CREATE TABLE trade_calendar (\"exchange\" TEXT NOT NULL,\"cal_date\" TEXT NOT NULL,\"is_open\" INTEGER,\"pretrade_date\" TEXT,_scope TEXT NOT NULL,_updated_at TEXT NOT NULL,_source_task TEXT,PRIMARY KEY (\"exchange\",\"cal_date\"))",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "exchange",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 1
+        },
+        {
+          "cid": 1,
+          "name": "cal_date",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 2
+        },
+        {
+          "cid": 2,
+          "name": "is_open",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "pretrade_date",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "_scope",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "_updated_at",
+          "type": "TEXT",
+          "notnull": 1,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "_source_task",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 1271,
+      "foreign_keys": [],
+      "indexes": [
+        {
+          "seq": 0,
+          "name": "idx_trade_calendar_date",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        },
+        {
+          "seq": 1,
+          "name": "idx_trade_calendar_scope",
+          "unique": 0,
+          "origin": "c",
+          "partial": 0
+        },
+        {
+          "seq": 2,
+          "name": "sqlite_autoindex_trade_calendar_1",
+          "unique": 1,
+          "origin": "pk",
+          "partial": 0
+        }
+      ]
+    },
+    "期货_下载缺口记录": {
+      "type": "view",
+      "sql": "CREATE VIEW \"期货_下载缺口记录\" AS\n                    SELECT dataset AS 数据接口,symbol AS 合约代码,day AS 缺失日期,\n                    reason AS 原因,status AS 状态,attempts AS 检查次数,\n                    first_seen AS 首次发现,last_seen AS 最近发现,\n                    source_task AS 最近任务,resolved_at AS 补齐时间 FROM data_gaps",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "数据接口",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 1,
+          "name": "合约代码",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "缺失日期",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "原因",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "状态",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "检查次数",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "首次发现",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "最近发现",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "最近任务",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "补齐时间",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 113
+    },
+    "期货_交易日历": {
+      "type": "view",
+      "sql": "CREATE VIEW \"期货_交易日历\" AS\n                    SELECT exchange AS 交易所,cal_date AS 日历日期,\n                    is_open AS 是否交易日,pretrade_date AS 前交易日 FROM trade_calendar",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "交易所",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 1,
+          "name": "日历日期",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "是否交易日",
+          "type": "INTEGER",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "前交易日",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 1271
+    },
+    "期货_合约信息": {
+      "type": "view",
+      "sql": "CREATE VIEW \"期货_合约信息\" AS\n                    SELECT ts_code AS 合约代码,name AS 合约名称,fut_code AS 品种,exchange AS 交易所,\n                    per_unit AS 每手数量,trade_unit AS 交易单位,list_date AS 上市日期,\n                    delist_date AS 最后交易日,last_ddate AS 最后交割日,_updated_at AS 本地入库时间\n                    FROM contracts",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "合约代码",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 1,
+          "name": "合约名称",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "品种",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "交易所",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "每手数量",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "交易单位",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "上市日期",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "最后交易日",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "最后交割日",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "本地入库时间",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 392
+    },
+    "期货_同步清单": {
+      "type": "view",
+      "sql": "CREATE VIEW \"期货_同步清单\" AS\n                    SELECT dataset AS 数据接口,symbol AS 合约或交易所,\n                    day AS 已覆盖日期,version AS 数据口径版本 FROM coverage",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "数据接口",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 1,
+          "name": "合约或交易所",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "已覆盖日期",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "数据口径版本",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 28375
+    },
+    "期货_数据缺口": {
+      "type": "view",
+      "sql": "CREATE VIEW \"期货_数据缺口\" AS\n                    SELECT 'fut_daily' AS 数据接口,m.mapping_ts_code AS 合约代码,\n                    m.trade_date AS 交易日,'主力映射缺少对应月份日线' AS 原因\n                    FROM main_mapping m LEFT JOIN daily_bars b\n                    ON b.ts_code=m.mapping_ts_code AND b.trade_date=m.trade_date\n                    WHERE b.ts_code IS NULL\n                    UNION ALL\n                    SELECT 'ft_limit',b.ts_code,b.trade_date,'月份日线缺少涨跌停参数'\n                    FROM daily_bars b LEFT JOIN price_limits p\n                    ON p.ts_code=b.ts_code AND p.trade_date=b.trade_date WHERE p.ts_code IS NULL\n                    UNION ALL\n                    SELECT 'fut_settle',b.ts_code,b.trade_date,'月份日线缺少结算参数'\n                    FROM daily_bars b LEFT JOIN settlement_params p\n                    ON p.ts_code=b.ts_code AND p.trade_date=b.trade_date WHERE p.ts_code IS NULL",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "数据接口",
+          "type": "",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 1,
+          "name": "合约代码",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "交易日",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "原因",
+          "type": "",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 553
+    },
+    "期货_数据覆盖": {
+      "type": "view",
+      "sql": "CREATE VIEW \"期货_数据覆盖\" (数据接口,数据类别,合约或交易所,行数,起始日期,结束日期,最后入库时间) AS SELECT 'fut_basic' AS 数据接口,'合约信息' AS 数据类别,_scope AS 合约或交易所,count(*) AS 行数,NULL,NULL,max(_updated_at) AS 最后入库时间 FROM contracts GROUP BY _scope UNION ALL SELECT 'fut_trade_cal' AS 数据接口,'交易日历' AS 数据类别,_scope AS 合约或交易所,count(*) AS 行数,min(cal_date),max(cal_date),max(_updated_at) AS 最后入库时间 FROM trade_calendar GROUP BY _scope UNION ALL SELECT 'fut_daily' AS 数据接口,'月份合约日线' AS 数据类别,_scope AS 合约或交易所,count(*) AS 行数,min(trade_date),max(trade_date),max(_updated_at) AS 最后入库时间 FROM daily_bars GROUP BY _scope UNION ALL SELECT 'fut_mapping' AS 数据接口,'主连映射' AS 数据类别,_scope AS 合约或交易所,count(*) AS 行数,min(trade_date),max(trade_date),max(_updated_at) AS 最后入库时间 FROM main_mapping GROUP BY _scope UNION ALL SELECT 'ft_limit' AS 数据接口,'涨跌停与保证金' AS 数据类别,_scope AS 合约或交易所,count(*) AS 行数,min(trade_date),max(trade_date),max(_updated_at) AS 最后入库时间 FROM price_limits GROUP BY _scope UNION ALL SELECT 'fut_settle' AS 数据接口,'结算参数' AS 数据类别,_scope AS 合约或交易所,count(*) AS 行数,min(trade_date),max(trade_date),max(_updated_at) AS 最后入库时间 FROM settlement_params GROUP BY _scope",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "数据接口",
+          "type": "",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 1,
+          "name": "数据类别",
+          "type": "",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "合约或交易所",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "行数",
+          "type": "",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "起始日期",
+          "type": "",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "结束日期",
+          "type": "",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "最后入库时间",
+          "type": "",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 127
+    },
+    "期货_涨跌停与保证金": {
+      "type": "view",
+      "sql": "CREATE VIEW \"期货_涨跌停与保证金\" AS\n                    SELECT ts_code AS 合约代码,trade_date AS 交易日,up_limit AS 涨停价,\n                    down_limit AS 跌停价,m_ratio AS 最低保证金率_百分数 FROM price_limits",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "合约代码",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 1,
+          "name": "交易日",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "涨停价",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "跌停价",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "最低保证金率_百分数",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 8719
+    },
+    "期货_结算参数": {
+      "type": "view",
+      "sql": "CREATE VIEW \"期货_结算参数\" AS\n                    SELECT ts_code AS 合约代码,trade_date AS 交易日,settle AS 结算价,\n                    trading_fee_rate AS 交易手续费率,trading_fee AS 交易手续费,\n                    offset_today_fee AS 平今仓手续费参数,long_margin_rate AS 买投机保证金参数,\n                    short_margin_rate AS 卖投机保证金参数 FROM settlement_params",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "合约代码",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 1,
+          "name": "交易日",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "结算价",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "交易手续费率",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "交易手续费",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "平今仓手续费参数",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "买投机保证金参数",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "卖投机保证金参数",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 8606
+    },
+    "沪铜_主力映射": {
+      "type": "view",
+      "sql": "CREATE VIEW \"沪铜_主力映射\" AS\n                    SELECT ts_code AS 主连代码,trade_date AS 交易日,mapping_ts_code AS 实际月份合约,\n                    _updated_at AS 本地入库时间 FROM main_mapping",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "主连代码",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 1,
+          "name": "交易日",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "实际月份合约",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "本地入库时间",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 840
+    },
+    "沪铜_主连未复权行情": {
+      "type": "view",
+      "sql": "CREATE VIEW \"沪铜_主连未复权行情\" AS\n                    SELECT m.ts_code AS 主连代码,m.trade_date AS 交易日,m.mapping_ts_code AS 实际月份合约,\n                    b.open AS 开盘价,b.close AS 收盘价,b.settle AS 结算价,b.vol AS 成交量_手,\n                    '原始主力拼接，未复权；不用于直接计算换月收益' AS 价格口径,\n                    CASE WHEN b.ts_code IS NULL THEN '缺少月份行情' ELSE '已匹配' END AS 匹配状态\n                    FROM main_mapping m LEFT JOIN daily_bars b\n                    ON b.ts_code=m.mapping_ts_code AND b.trade_date=m.trade_date",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "主连代码",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 1,
+          "name": "交易日",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "实际月份合约",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "开盘价",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "收盘价",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "结算价",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "成交量_手",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "价格口径",
+          "type": "",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "匹配状态",
+          "type": "",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 840
+    },
+    "沪铜_月份合约行情": {
+      "type": "view",
+      "sql": "CREATE VIEW \"沪铜_月份合约行情\" AS\n                    SELECT b.ts_code AS 合约代码,c.name AS 合约名称,b.trade_date AS 交易日,\n                    b.open AS 开盘价,b.high AS 最高价,b.low AS 最低价,b.close AS 收盘价,\n                    b.settle AS 结算价,b.vol AS 成交量_手,b.oi AS 持仓量_手,b.amount AS 成交额_万元,\n                    c.per_unit AS 每手吨数,c.delist_date AS 最后交易日,b._updated_at AS 本地入库时间\n                    FROM daily_bars b LEFT JOIN contracts c ON b.ts_code=c.ts_code",
+      "columns": [
+        {
+          "cid": 0,
+          "name": "合约代码",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 1,
+          "name": "合约名称",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 2,
+          "name": "交易日",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 3,
+          "name": "开盘价",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 4,
+          "name": "最高价",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 5,
+          "name": "最低价",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 6,
+          "name": "收盘价",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 7,
+          "name": "结算价",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 8,
+          "name": "成交量_手",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 9,
+          "name": "持仓量_手",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 10,
+          "name": "成交额_万元",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 11,
+          "name": "每手吨数",
+          "type": "REAL",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 12,
+          "name": "最后交易日",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        },
+        {
+          "cid": 13,
+          "name": "本地入库时间",
+          "type": "TEXT",
+          "notnull": 0,
+          "dflt_value": null,
+          "pk": 0
+        }
+      ],
+      "row_count": 8939
+    }
+  }
+}
