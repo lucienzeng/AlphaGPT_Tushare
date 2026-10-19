@@ -61,6 +61,11 @@ def backtest(
     direction: int = 1,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     cfg.validate()
+    from alphagpt.research.protocol import availability_check
+    availability_check({
+        name: frame.loc[frame.trade_date.le(end)] if "trade_date" in frame else frame
+        for name, frame in data.items()
+    }, cfg.decision_lag)
     mapping = data["mapping"].sort_values("trade_date").set_index("trade_date")
     dates = mapping.index.tolist()
     bars = data["bars"].set_index(["trade_date", "ts_code"])
@@ -110,13 +115,23 @@ def backtest(
                 size = float(contracts.loc[target, "per_unit"])
                 if not np.isfinite(size) or size <= 0:
                     raise ValueError("商品期货 per_unit 无效")
-                wanted = int(signals.iloc[prior_i]) * math.floor(
-                    # 延迟超过一天时，也只用决策日权益定单，不能借用后一天的账户结果。
-                    max(0, equity_history.get(decision_day, cfg.capital))
-                    * cfg.exposure
-                    / (float(decision_bar.close) * size)
-                )
-        if pending_liquidation or equity + gross <= 0:
+                # 下单手数在决策日冻结：不能先看到执行日开盘价，再按该价调仓并成交。
+                known_equity = max(0, equity_history.get(decision_day, cfg.capital))
+                reference = float(decision_bar.close) * size
+                if not np.isfinite(reference) or reference <= 0:
+                    raise ValueError("决策日参考价格无效")
+                if (decision_day, target) not in limits.index:
+                    raise ValueError(f"{decision_day} {target} 缺决策日保证金参数")
+                known_limit = limits.loc[(decision_day, target)]
+                margin = float(known_limit.m_ratio) / 100 if pd.notna(known_limit.m_ratio) else cfg.fallback_margin
+                if not np.isfinite(margin) or margin <= 0:
+                    raise ValueError("决策日保证金比例无效")
+                nominal_cap = math.floor(known_equity * cfg.exposure / reference)
+                margin_cap = math.floor(known_equity * cfg.margin_cap / (reference * margin))
+                wanted = int(signals.iloc[prior_i]) * min(nominal_cap, margin_cap)
+        planned_target, planned_quantity = target, wanted
+        # 强平指令只来自已完成的上一交易日账本，不用当日开盘浮盈亏倒推开盘订单。
+        if pending_liquidation or equity <= 0:
             target, wanted = None, 0
             reason.append("保证金保护：下一可成交时点减仓")
 
@@ -124,13 +139,16 @@ def backtest(
             nonlocal fee, slip_cost, turnover
             if change == 0:
                 return 0
+            # 当日总成交量直到盘后才知道，不能用 b.vol 决定当日开盘是否成交。
             b = bar(day, symbol)
-            if b is None or not np.isfinite(b.open) or b.vol <= 0:
-                reason.append(f"{symbol} 无可用开盘行情/无成交，订单未成交")
+            if b is None or not np.isfinite(b.open) or b.open <= 0:
+                reason.append(f"{symbol} 无可用开盘报价，订单未成交")
                 return 0
             lim = limits.loc[(day, symbol)] if (day, symbol) in limits.index else None
             if lim is None:
                 raise ValueError(f"{day} {symbol} 缺涨跌停数据，无法校验成交")
+            if any(not np.isfinite(float(lim[k])) or float(lim[k]) <= 0 for k in ['up_limit','down_limit']):
+                raise ValueError(f'{day} {symbol} 涨跌停价无效；拒绝用NaN绕过成交约束')
             price = float(b.open)
             if (change > 0 and price >= float(lim.up_limit)) or (
                 change < 0 and price <= float(lim.down_limit)
@@ -190,15 +208,6 @@ def backtest(
                 lim = limits.loc[(day, target)] if (day, target) in limits.index else None
                 if lim is None:
                     raise ValueError(f"目标合约 {target} 缺保证金约束")
-                margin = float(lim.m_ratio) / 100 if pd.notna(lim.m_ratio) else cfg.fallback_margin
-                unit = float(contracts.loc[target, "per_unit"])
-                funds = max(0, before + gross - fee - slip_cost)
-                cap = (
-                    math.floor(funds * cfg.margin_cap / (float(b.open) * unit * margin))
-                    if margin > 0
-                    else 0
-                )
-                wanted = int(np.sign(wanted)) * min(abs(wanted), cap)
                 current = qty if holding == target else 0
                 # 反手分两笔，持有到下次开盘才退出，不产生平今费率歧义。
                 if current * wanted < 0:
@@ -228,6 +237,9 @@ def backtest(
         rows.append(
             {
                 "trade_date": day,
+                "decision_date": dates[prior_i] if prior_i >= 0 else None,
+                "planned_symbol": planned_target or "",
+                "planned_quantity": planned_quantity,
                 "equity": equity,
                 "net_pnl": net,
                 "gross_pnl": gross,

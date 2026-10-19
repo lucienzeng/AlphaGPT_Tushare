@@ -6,29 +6,12 @@ import re
 import numpy as np
 import pandas as pd
 
-FEATURES = {
-    "ret5": "连续价格5日收益",
-    "ret20": "连续价格20日收益",
-    "ret60": "连续价格60日收益",
-    "trend20": "收盘价相对20日均线偏离",
-    "trend60": "收盘价相对60日均线偏离",
-    "reversal": "负的3日收益，较高表示近期下跌",
-    "volatility": "20日收益标准差",
-    "volatility_ratio": "5日/20日收益波动率比减1",
-    "range20": "20日平均日内振幅比例",
-    "close_position": "收盘在当日高低区间的位置减0.5",
-    "volume_ratio": "当前月合约成交量/该合约过去20日均量减1",
-    "oi_change5": "当前月合约5日持仓变化率，不代表单向资金流入",
-    "oi_ratio": "当前月合约持仓量/该合约过去20日均量减1",
-    "volume_oi": "当前月合约成交/持仓比",
-    "price_volume": "1日连续收益乘成交量偏离",
-    "price_oi": "5日连续收益乘5日持仓变化率",
-    "breakout": "收盘相对过去20日最高价与最低价中点偏离",
-    "vol_change": "20日波动率的5日变化",
-}
+from alphagpt.factor.specs import FEATURES, RAW_FEATURES, SPECS, describe
 
 
-def features(data: dict[str, pd.DataFrame]) -> tuple[pd.DataFrame, pd.DataFrame]:
+
+
+def features(data: dict[str, pd.DataFrame], version="legacy-v1") -> tuple[pd.DataFrame, pd.DataFrame]:
     bars = data["bars"].sort_values(["ts_code", "trade_date"]).copy()
     # 相对量与持仓变化先在真实合约内计算，避免把主力迁移误当作交易行为。
     for _, group in bars.groupby("ts_code", sort=False):
@@ -43,6 +26,7 @@ def features(data: dict[str, pd.DataFrame]) -> tuple[pd.DataFrame, pd.DataFrame]
                 stable.oi / stable.oi.rolling(20, min_periods=10).mean().shift(1) - 1
             )
             bars.loc[index, "oi_change5"] = stable.oi.pct_change(5, fill_method=None)
+        bars.loc[ix, "same_contract_ret5"] = group.close.pct_change(5, fill_method=None)
         bars.loc[ix, "volume_oi"] = group.vol / group.oi.replace(0, np.nan)
     panel = data["mapping"].merge(
         bars,
@@ -55,23 +39,13 @@ def features(data: dict[str, pd.DataFrame]) -> tuple[pd.DataFrame, pd.DataFrame]
     panel = panel.sort_values("trade_date").reset_index(drop=True)
     if panel.close.isna().any():
         raise ValueError("信号序列缺少主力真实行情")
-    price_index = bars.set_index(["trade_date", "ts_code"])
-    adjustment, prior = 1.0, None
-    adjusted = []
-    for row in panel.itertuples():
-        if prior and prior.mapping_ts_code != row.mapping_ts_code:
-            try:
-                old = price_index.loc[(prior.trade_date, prior.mapping_ts_code), "close"]
-                new = price_index.loc[(prior.trade_date, row.mapping_ts_code), "close"]
-            except KeyError as e:
-                raise ValueError("换月缺少前一交易日新旧合约价格，不能制造复权值") from e
-            # 只在切换时累计当时已经知道的比例，追加未来数据不重写历史信号。
-            adjustment *= old / new
-        adjusted.append(adjustment)
-        prior = row
-    panel["adjustment"] = adjusted
-    for column in ["open", "high", "low", "close"]:
-        panel["signal_" + column] = panel[column] * panel.adjustment
+    from alphagpt.data.curves import build_curve_frame
+    curve = data.get("signal_curve")
+    if curve is None:
+        curve = build_curve_frame(data)
+    extra = ["adjustment", "signal_open", "signal_high", "signal_low", "signal_close", "is_roll", "days_since_roll", "days_to_last_trade"]
+    panel = panel.merge(curve[["trade_date", "mapping_ts_code"] + extra],
+                        on=["trade_date", "mapping_ts_code"], validate="one_to_one")
     p = panel.signal_close
     r = p.pct_change(fill_method=None)
     f = pd.DataFrame(index=pd.Index(panel.trade_date, name="trade_date"))
@@ -110,6 +84,23 @@ def features(data: dict[str, pd.DataFrame]) -> tuple[pd.DataFrame, pd.DataFrame]
             60, min_periods=30
         ).std().shift(1).replace(0, np.nan)
         f[name] = z.replace([np.inf, -np.inf], np.nan).to_numpy()
+    if version == "futures-v2":
+        # 显式区分原始方向、标准分强度与已知生命周期，不把原始方向再次标准化。
+        raw = {
+            "ret20_raw": p.pct_change(20, fill_method=None),
+            "ret60_raw": p.pct_change(60, fill_method=None),
+            "oi_change5_raw": panel.oi_change5,
+            "close_location_raw": (panel.close-panel.low)/(panel.high-panel.low).replace(0,np.nan)-0.5,
+            "same_contract_ret5_raw": panel.same_contract_ret5,
+            "same_contract_price_oi_raw": panel.same_contract_ret5 * panel.oi_change5,
+            "days_to_last_trade": panel.days_to_last_trade,
+            "days_since_roll": panel.days_since_roll,
+            "is_roll": panel.is_roll,
+        }
+        for name, series in raw.items():
+            f[name] = series.replace([np.inf,-np.inf],np.nan).to_numpy()
+    elif version != "legacy-v1":
+        raise ValueError("未知特征版本")
     return f, panel
 
 
@@ -204,8 +195,8 @@ def formula_explanation(expr: str) -> str:
     """按实际 AST 生成计算释义，帮助识别模型经济叙述中的符号理解偏差。"""
     tree = ast.parse(expr, mode="eval")
     names = sorted({n.id for n in ast.walk(tree) if isinstance(n, ast.Name) and n.id in FEATURES})
-    text = "输入均为标准分：(原始值－之前60日均值)/之前60日样本标准差，至少30日预热。\n\n"
-    text += "\n".join(f"- {n}：{FEATURES[n]}的标准分。" for n in names)
+    text = "输入按字段类型分别处理：历史标准分、原始值、天数或标志，不能混称。\n\n"
+    text += "\n".join(f"- {n}：{describe(n)}。" for n in names)
     rules = {
         ast.Add: "相加",
         ast.Sub: "相减",
@@ -231,7 +222,7 @@ def formula_explanation(expr: str) -> str:
         }
     )
     text += "\n\n算子：" + "；".join(operations)
-    text += "。按公式括号与通常四则优先级逐日计算。负权重会翻转乘积符号，不只是减弱信号；标准分为正只表示原始特征高于历史均值，不能据此判定原始收益、趋势偏离或持仓变化为正。"
+    text += "。按公式括号与通常四则优先级逐日计算。负权重会翻转乘积符号，不只是减弱信号；标准分为正表示高于历史均值；原始收益/持仓变化正负才表示实际方向。"
     text += "因子随后再次按历史窗口标准化、乘预期方向并按阈值映射为多/空/空仓。模型经济解释是待审查假设，计算释义与冻结公式确定实际行为。"
     return text
 

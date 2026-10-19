@@ -195,7 +195,7 @@ def test_missing_coverage_only_and_row_split(context, monkeypatch):
         def request(self, endpoint, **p):
             days = pd.bdate_range(p["start_date"], p["end_date"]).strftime("%Y%m%d")
             calls.append(list(days))
-            return pd.DataFrame({"trade_date": days, "ts_code": "CU2401.SHF", "close": 100}).head(3)
+            return pd.DataFrame({"trade_date": days, "ts_code": "CU2401.SHF", "open":100,"high":101,"low":99,"close":100,"settle":100,"vol":1000,"oi":2000}).head(3)
 
     monkeypatch.setitem(ROW_LIMITS, "fut_daily", 3)
     svc = FuturesData(context.store, Fake())
@@ -357,7 +357,7 @@ def test_repair_interruption_resumes_completed_chunks(context):
                 {
                     "trade_date": pd.bdate_range(p["start_date"], p["end_date"]).strftime("%Y%m%d"),
                     "ts_code": "CU2401.SHF",
-                    "close": 100,
+                    "close": 100, "open":100,"high":101,"low":99,"settle":100,"vol":1000,"oi":2000,
                 }
             )
 
@@ -384,7 +384,7 @@ def test_tail_check_respects_cooldown(context):
                 {
                     "trade_date": pd.bdate_range(p["start_date"], p["end_date"]).strftime("%Y%m%d"),
                     "ts_code": "CU2401.SHF",
-                    "close": 100,
+                    "close": 100, "open":100,"high":101,"low":99,"settle":100,"vol":1000,"oi":2000,
                 }
             )
 

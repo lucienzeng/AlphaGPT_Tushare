@@ -140,8 +140,15 @@ class BacktestConfig:
             or min(self.fee, self.slippage_ticks, self.broker_fee_per_lot) < 0
         ):
             raise ValueError("费用模式无效或交易成本为负")
-        if self.decision_lag < 1 or self.signal_window < 10 or self.threshold < 0:
-            raise ValueError("成交延迟至少 1 个交易日，标准化窗口至少 10，阈值非负")
+        if self.decision_lag < 1 or self.signal_window < 20 or self.threshold < 0:
+            raise ValueError("成交延迟至少 1 个交易日，标准化窗口至少 20，阈值非负")
+        if any(type(v) is not int for v in (self.decision_lag, self.signal_window, self.delivery_buffer_days)):
+            raise ValueError("延迟、窗口和交割缓冲必须为整数")
+        if self.tick_size <= 0 or not 0 < self.fallback_margin <= 1 or self.delivery_buffer_days < 0:
+            raise ValueError("最小价位须为正，备用保证金比例须处于(0,1]，交割缓冲不得为负")
+        import math
+        if any(not math.isfinite(v) for v in asdict(self).values() if isinstance(v,(int,float))):
+            raise ValueError('回测参数不能含NaN或无穷值')
 
 
 @dataclass
@@ -155,12 +162,30 @@ class ExperimentConfig:
     count: int = 10
     direction: str = "研究沪铜趋势、反转、波动与量价持仓结构的可解释时间序列因子"
     max_calls: int = 6
-    token_budget: int = 50000
+    token_budget: int = 500000
     correlation_limit: float = 0.98
     model: ModelProfile = field(default_factory=ModelProfile)
     backtest: BacktestConfig = field(default_factory=BacktestConfig)
 
+    curve: str = "CU.SHF"
+    price_mode: str = "causal_ratio"
+    feature_version: str = "futures-v2"
+    use_templates: bool = False
+    research_protocol: str = 'isolated-v1'
+    candidate_budget: int = 30
+    random_controls: int = 3
+
     def validate(self) -> None:
+        if self.research_protocol not in ('isolated-v1','legacy-v1'):
+            raise ValueError('未知研究协议')
+        if self.research_protocol == 'isolated-v1' and self.backtest.decision_lag < 2:
+            raise ValueError('历史发布时间未核实：新研究协议要求保守延迟至少2个交易日')
+        if not 1 <= self.candidate_budget <= 1000 or self.rounds*self.count > self.candidate_budget:
+            raise ValueError('模型候选数超过研究计划预算；请减少轮数/每轮数量，或明确调整计划预算')
+        if not 0 <= self.random_controls <= 30:
+            raise ValueError('随机对照数量必须为0～30')
+        if self.price_mode not in ("causal_ratio", "raw") or self.feature_version not in ("legacy-v1", "futures-v2"):
+            raise ValueError("曲线或特征版本无效")
         dates = list(
             map(
                 date.fromisoformat,
@@ -178,6 +203,12 @@ class ExperimentConfig:
     @classmethod
     def from_dict(cls, d: dict) -> "ExperimentConfig":
         d = dict(d)
+        # 旧任务未保存版本时沿用旧特征，不能在恢复或重测时悄悄升级。
+        d.setdefault("feature_version", "legacy-v1")
+        d.setdefault('research_protocol','legacy-v1')
+        if d['research_protocol'] == 'legacy-v1':
+            d.setdefault('random_controls',0)
+            d.setdefault('candidate_budget',max(30,d.get('rounds',1)*d.get('count',10)))
         d["model"] = ModelProfile(**d.get("model", {}))
         d["backtest"] = BacktestConfig(**d.get("backtest", {}))
         return cls(**d)

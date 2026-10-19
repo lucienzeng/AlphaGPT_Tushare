@@ -15,6 +15,7 @@ from alphagpt.research.config import DownloadConfig
 from alphagpt.research.storage import Store, digest_frame, dumps, now
 from alphagpt.research.jobs import Context
 from alphagpt.data.sqlite import MarketData, FIELDS
+from alphagpt.data.quality import validate_response, validate_bars, validate_dataset, audit
 
 ROW_LIMITS = {
     "fut_basic": 10000,
@@ -195,6 +196,7 @@ class FuturesData:
         cu = frame[frame.fut_code.eq("CU")].copy()
         if cu.empty:
             raise ValueError("未找到沪铜合约，拒绝使用其他品种替代")
+        cu = validate_response('fut_basic', cu)
         self.market.write(
             "fut_basic",
             "CU",
@@ -281,6 +283,12 @@ class FuturesData:
                 )
             if date_col not in chunk:
                 raise ValueError(f"{endpoint} 缺少 {date_col}")
+            try:
+                chunk = validate_response(endpoint, chunk)
+            except ValueError as e:
+                audit(self.store, f'{endpoint}/{symbol}', {'error':str(e)}, self.ctx.id, 'failed')
+                self.ctx.log('quality_failed', endpoint=endpoint, symbol=symbol, error=str(e))
+                raise
             actual = set(chunk[date_col].dropna())
             missing_actual = set(group) - actual
             if missing_actual:
@@ -409,6 +417,7 @@ class FuturesData:
             "limits": limits.sort_values(["trade_date", "ts_code"]).reset_index(drop=True),
             "fees": fees.sort_values(["trade_date", "ts_code"]).reset_index(drop=True),
         }
+        quality = validate_dataset(frames)
         h = hashlib.sha256()
         for name, frame in frames.items():
             h.update(name.encode() + digest_frame(frame))
@@ -433,8 +442,11 @@ class FuturesData:
                     "rows": len(bars),
                     "contracts": len(contracts),
                     "download_task": self.ctx.id,
+                    "file_hashes": {name: hashlib.sha256((self.store.root / path).read_bytes()).hexdigest()
+                                    for name, path in paths.items()},
                 },
             )
+        audit(self.store, snapshot, quality, self.ctx.id)
         result = {
             "snapshot": snapshot,
             "requests": self.source.calls,
@@ -446,35 +458,24 @@ class FuturesData:
         return result
 
 
-def validate_bars(frame: pd.DataFrame) -> dict:
-    required = ["ts_code", "trade_date", "open", "high", "low", "close", "settle", "vol", "oi"]
-    if any(x not in frame for x in required) or frame.empty:
-        raise ValueError("行情为空或缺少必要字段")
-    bad = (
-        frame[["open", "high", "low", "close", "settle"]].isna().any(axis=1)
-        | frame[["open", "high", "low", "close", "settle"]].le(0).any(axis=1)
-        | frame.high.lt(frame.low)
-        | frame.open.gt(frame.high)
-        | frame.open.lt(frame.low)
-        | frame.close.gt(frame.high)
-        | frame.close.lt(frame.low)
-        | frame.vol.lt(0)
-        | frame.oi.lt(0)
-    )
-    if bad.any():
-        raise ValueError(
-            f"行情有 {bad.sum()} 行关键异常，示例：{frame.loc[bad, ['ts_code','trade_date']].head().to_dict('records')}"
-        )
-    return {
-        "rows": len(frame),
-        "invalid": 0,
-        "duplicates": int(frame.duplicated(["ts_code", "trade_date"]).sum()),
-        "units": "价格元/吨，成交及持仓手，成交额万元；保留供应商原始字段，跨2020特征另行处理",
-    }
-
-
-def load_snapshot(store: Store, key: str) -> dict[str, pd.DataFrame]:
+def load_snapshot(store: Store, key: str, asof=None) -> dict[str, pd.DataFrame]:
     meta = store.get("snapshots", key)
     if not meta:
         raise ValueError("数据快照不存在，请先同步")
-    return {name: store.read(path) for name, path in meta["paths"].items()}
+    for name, expected in meta.get('file_hashes', {}).items():
+        if hashlib.sha256((store.root / meta['paths'][name]).read_bytes()).hexdigest() != expected:
+            raise ValueError(f'快照文件内容校验失败：{key}/{name}')
+    data = {name: store.read(path) for name, path in meta["paths"].items()}
+    if asof:
+        # 下游永远只得到允许的历史前缀；Parquet冻结文件本身不是权限隔离容器。
+        data = {k:v.loc[v.trade_date.le(asof)].copy() if 'trade_date' in v else v for k,v in data.items()}
+    try:
+        report = validate_dataset(data)
+    except ValueError as e:
+        audit(store,key,{'error':str(e),'asof':asof},status='failed')
+        logging.getLogger(__name__).error('快照质量拦截 [%s]：%s',key,e)
+        raise
+    report_key=f'{key}:{asof or "full"}'
+    if not store.get('snapshot_quality', report_key):
+        store.put('snapshot_quality', report_key, {**report, 'asof':asof, 'legacy_hash_status': '原快照无文件哈希' if not meta.get('file_hashes') else '已校验'})
+    return data

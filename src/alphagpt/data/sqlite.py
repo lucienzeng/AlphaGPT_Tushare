@@ -286,7 +286,18 @@ class MarketData:
             raise ValueError(f"{endpoint} 返回的数据不属于请求范围 {symbol}，拒绝错误入库和覆盖")
         for col in frame:
             quoted(col)
-        frame = frame.drop_duplicates(list(keys), keep="last")
+        from alphagpt.data.quality import unique_rows
+        frame = unique_rows(frame, list(keys))
+        # 保存接收版本，不把本地获取时间冒充历史发布时间；修复不会销毁来源证据。
+        revision = hashlib.sha256((endpoint + symbol).encode() + digest_frame(frame)).hexdigest()
+        if not db.execute("SELECT 1 FROM objects WHERE kind='source_revisions' AND id=?", (revision,)).fetchone():
+            previous = MarketData._read(db, endpoint, symbol)
+            put_object(db, 'source_revisions', revision, dict(
+                endpoint=endpoint, symbol=symbol, fetched_at=now(), published_at=None,
+                availability_status='历史发布时间未知；保守假设', task=task,
+                content_hash=revision, received=frame.to_dict('records'),
+                prior_rows=previous.loc[previous[list(keys)].apply(tuple, axis=1).isin(
+                    set(frame[list(keys)].apply(tuple, axis=1)))].to_dict('records') if not previous.empty else []))
         if schema_frame is None:
             # 部分字段更新时仍保留此前列定义；新列在历史行缺失时采用 pandas 合并类型。
             previous = MarketData._read(db, endpoint, symbol)

@@ -62,6 +62,17 @@ class Store:
             CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY,kind TEXT,status TEXT,created TEXT,updated TEXT,
                 fingerprint TEXT,params TEXT,payload TEXT,cancel INTEGER DEFAULT 0);
             CREATE TABLE IF NOT EXISTS events(seq INTEGER PRIMARY KEY AUTOINCREMENT,task TEXT,time TEXT,event TEXT,payload TEXT);
+            CREATE VIEW IF NOT EXISTS "期货_质量检查" AS SELECT id AS 检查编号,created AS 记录时间,
+                json_extract(payload,'$.subject') AS 检查对象,json_extract(payload,'$.status') AS 状态,
+                json_extract(payload,'$.task') AS 任务编号,payload AS 详细结果 FROM objects WHERE kind='quality_checks';
+            CREATE VIEW IF NOT EXISTS "期货_来源版本" AS SELECT id AS 版本编号,
+                json_extract(payload,'$.endpoint') AS 接口,json_extract(payload,'$.symbol') AS 合约,
+                json_extract(payload,'$.fetched_at') AS 获取时间,json_extract(payload,'$.published_at') AS 发布时间,
+                json_extract(payload,'$.availability_status') AS 可得性说明,payload AS 详细版本 FROM objects WHERE kind='source_revisions';
+            CREATE VIEW IF NOT EXISTS "研究_区间暴露" AS SELECT id AS 记录编号,
+                json_extract(payload,'$.start') AS 开始日期,json_extract(payload,'$.end') AS 结束日期,
+                json_extract(payload,'$.phase') AS 阶段,json_extract(payload,'$.independent') AS 未记录先前暴露,
+                payload AS 详细结果 FROM objects WHERE kind='holdout_access';
             """)
 
     @contextmanager

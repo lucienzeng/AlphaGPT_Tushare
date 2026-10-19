@@ -12,7 +12,8 @@ from alphagpt.research.workflow import mine, execute, export_experiment
 from alphagpt.research.jobs import Manager
 
 
-def test_complete_offline_pipeline_and_frozen_test(tmp_path, monkeypatch):
+@pytest.mark.parametrize("feature_version,curve,price_mode", [("legacy-v1","CU.SHF","causal_ratio"),("futures-v2","CU.SHF","causal_ratio"),("futures-v2","CU2401.SHF","raw")])
+def test_complete_offline_pipeline_and_frozen_test(tmp_path, monkeypatch, feature_version, curve, price_mode):
     import alphagpt.research.workflow as workflow
 
     store = Store(tmp_path)
@@ -37,9 +38,9 @@ def test_complete_offline_pipeline_and_frozen_test(tmp_path, monkeypatch):
         def call(self, prompt, *args):
             prompts.append(prompt)
             exp = (
-                "trend20 + 0.3 * volume_ratio"
+                "ret5 * volatility"
                 if len(prompts) == 1
-                else "reversal + 0.2 * oi_change5"
+                else "volatility_ratio + volume_oi"
             )
             return json.dumps(
                 {
@@ -58,7 +59,8 @@ def test_complete_offline_pipeline_and_frozen_test(tmp_path, monkeypatch):
 
     monkeypatch.setattr(workflow, "ModelClient", FakeModel)
     cfg = ExperimentConfig(
-        "offline", "2023-07-01", "2023-10-31", "2024-01-31", "2024-06-30", rounds=2, count=1
+        "offline", "2023-07-01", "2023-10-31", "2024-01-31", "2024-06-30", rounds=2, count=1,
+        feature_version=feature_version, curve=curve, price_mode=price_mode, use_templates=feature_version == "futures-v2"
     )
     ctx = Context(store)
     result = mine(asdict(cfg), ctx)

@@ -22,6 +22,7 @@ from alphagpt.research.workflow import export_experiment
 from alphagpt.data.futures import ROW_LIMITS
 from alphagpt.data.sqlite import MarketData
 from alphagpt.factor.research import formula_explanation
+from alphagpt.research.presentation import factor_state
 
 st.set_page_config(page_title="沪铜因子研究台", page_icon="📈", layout="wide")
 
@@ -42,7 +43,7 @@ def resources():
 store, manager = resources()
 st.title("沪铜因子研究台")
 st.caption("Tushare 真实数据 · 中文因子逻辑 · 真实月合约回测 · 本地持久化日志")
-page = st.sidebar.radio("工作区", ["数据同步", "因子挖掘", "回测结果"])
+page = st.sidebar.radio("工作区", ["数据同步", "数据展示", "因子挖掘", "回测结果"])
 st.sidebar.caption("凭据状态（不显示密钥）")
 for name in ("TUSHARE_TOKEN", "DEEPSEEK_API_KEY", "OPENAI_API_KEY", "MOONSHOT_API_KEY"):
     st.sidebar.write(("✓ " if os.getenv(name) else "○ ") + name)
@@ -115,6 +116,41 @@ def task_panel():
             )
 
 
+@st.fragment(run_every=3)
+def mining_factor_panel():
+    from alphagpt.research.presentation import factor_rows
+
+    st.subheader("全部挖掘因子与关联任务")
+    factors = store.list("factors")
+    if not factors:
+        st.info("尚无已保存因子。开始挖掘后，候选、淘汰记录和人工基线都会出现在这里。")
+        return
+    rows = factor_rows(factors, store.tasks(), store.list("runs"),
+                       store.list("experiments"), store.list("calls"))
+    listing = pd.DataFrame(rows)
+    st.caption(f"共 {len(listing)} 个已保存因子（含有效候选、已淘汰和人工基线）；默认显示全部任务，每3秒刷新。第0轮为人工基线。")
+    cols = st.columns(2)
+    task_filter = cols[0].selectbox("按任务查看", ["全部任务"] + listing["任务编号"].drop_duplicates().tolist(), key="mining_list_task")
+    status_filter = cols[1].multiselect("按因子状态查看", listing["因子状态"].drop_duplicates().tolist(), key="mining_list_status", help="留空表示全部状态，淘汰候选也会显示。")
+    if task_filter != "全部任务":
+        listing = listing[listing["任务编号"].eq(task_filter)]
+    if status_filter:
+        listing = listing[listing["因子状态"].isin(status_filter)]
+    st.dataframe(listing, hide_index=True, width="stretch",
+        column_config={"验证收益（%）": st.column_config.NumberColumn(format="%.2f"),
+                       "验证回撤（%）": st.column_config.NumberColumn(format="%.2f"),
+                       "验证夏普": st.column_config.NumberColumn(format="%.3f")})
+    st.caption("Token 为供应商已报告的输入与输出用量合计，不是元成本；任务用量在该任务的各因子行中重复展示，不能逐行相加。未报告用量不计入该数。此列表不展示最终测试区指标。")
+    if not listing.empty:
+        with st.expander("查看因子中文逻辑与关联任务详情"):
+            labels = dict(zip(listing["因子编号"], listing["因子名称"]))
+            chosen = st.selectbox("因子记录", listing["因子编号"].tolist(), format_func=lambda k: labels[k] + " · " + k, key="mining_factor_detail")
+            row = listing[listing["因子编号"].eq(chosen)].iloc[0]
+            st.write(row["中文逻辑"] or "该候选缺少有效中文逻辑，详见淘汰原因。")
+            st.code(row["因子表达式"], language="text")
+            st.write({k: row[k] for k in ["因子编号", "因子状态", "淘汰原因", "任务编号", "任务状态", "模型名称", "数据快照", "开发实验编号"]})
+
+
 def backtest_controls(prefix="") -> BacktestConfig:
     cols = st.columns(3)
     capital = cols[0].number_input(
@@ -125,22 +161,23 @@ def backtest_controls(prefix="") -> BacktestConfig:
         key=prefix + "capital",
     )
     exposure = cols[1].number_input(
-        "名义敞口/权益", min_value=0.01, max_value=1.0, value=0.8, key=prefix + "exposure"
+        "名义敞口/权益（比例，0.8=80%）", min_value=0.01, max_value=1.0, value=0.8, key=prefix + "exposure"
     )
     margin = cols[2].number_input(
-        "保证金预算/权益", min_value=0.01, max_value=1.0, value=0.35, key=prefix + "margin"
+        "保证金预算/权益（比例，0.35=35%）", min_value=0.01, max_value=1.0, value=0.35, key=prefix + "margin"
     )
     cols = st.columns(3)
     mode = cols[0].selectbox(
         "手续费模式", ["单边成交额费率", "单边元/手", "历史参数"], key=prefix + "fee_mode"
     )
     fee = cols[1].number_input(
-        "单边费率小数或元/手",
+        "单边手续费参数（费率小数或元/手）",
         min_value=0.0,
         value=0.00005,
         step=0.00001,
         format="%.6f",
         key=prefix + "fee",
+        help="成交额费率模式：0.00005=万分之0.5；元/手模式：按每手固定元数。历史参数模式不使用本输入值。",
     )
     slip = cols[2].number_input(
         "单边滑点（tick）", min_value=0.0, value=1.0, step=0.5, key=prefix + "slippage"
@@ -148,13 +185,14 @@ def backtest_controls(prefix="") -> BacktestConfig:
     with st.expander("信号与成交高级参数"):
         c = st.columns(3)
         window = c[0].number_input(
-            "标准化窗口（交易日）", min_value=10, value=60, key=prefix + "window"
+            "标准化窗口（交易日）", min_value=20, value=60, key=prefix + "window"
         )
         threshold = c[1].number_input(
-            "信号阈值", min_value=0.0, value=0.5, key=prefix + "threshold"
+            "信号阈值（标准差倍数）", min_value=0.0, value=0.5, key=prefix + "threshold"
         )
         lag = c[2].number_input(
-            "决策到执行延迟（交易日）", min_value=1, value=2, key=prefix + "lag"
+            "决策到执行延迟（交易日）", min_value=2, value=2, key=prefix + "lag",
+            help="来源历史发布时间尚未核实，至少延迟2个交易日；手数按决策日信息确定。"
         )
         c = st.columns(3)
         tick = c[0].number_input(
@@ -324,6 +362,34 @@ if page == "数据同步":
                 st.error(str(e))
     task_panel()
     if snapshots:
+        with st.expander('数据质量、可用时间与官方对账'):
+            from alphagpt.data.quality import reconcile, audit, validate_dataset
+            from alphagpt.data.futures import load_snapshot
+            quality_snapshot = st.selectbox('质量检查快照',[s['id'] for s in snapshots])
+            st.caption('历史发布时间未知的来源保留保守假设；本地下载时间不等于当年可用时间。官方CSV须先统一单位：价格元/吨、量持仓手、金额万元。')
+            if st.button('检查快照质量与文件完整性'):
+                try:
+                    data = load_snapshot(store,quality_snapshot)
+                    key = audit(store,quality_snapshot,validate_dataset(data))
+                    st.success('质量检查已保存：'+key)
+                except ValueError as e:
+                    audit(store,quality_snapshot,{'error':str(e)},status='failed')
+                    st.error(str(e))
+            upload = st.file_uploader('导入上期所对账CSV（ts_code,trade_date及待核对字段）',type=['csv'])
+            origin = st.text_input('官方文件来源链接或文件名称与下载日期')
+            if st.button('逐字段对账并记录差异'):
+                try:
+                    if upload is None:
+                        raise ValueError('请先选择已统一单位的官方CSV')
+                    key = reconcile(store,quality_snapshot,pd.read_csv(upload,dtype={'ts_code':str,'trade_date':str}),origin)
+                    st.json(store.get('quality_checks',key))
+                except (ValueError,KeyError) as e:
+                    st.error(str(e))
+            checks=store.list('quality_checks')[:100]
+            if checks:
+                st.dataframe(pd.DataFrame([dict(检查编号=x['id'],检查对象=x.get('subject'),状态=x.get('status'),检查时间=x.get('checked_at'),任务=x.get('task'),差异数=x.get('difference_count'),错误=x.get('error','')) for x in checks]),hide_index=True)
+                detail=st.selectbox('检查记录详情',[x['id'] for x in checks])
+                st.json(store.get('quality_checks',detail))
         with st.expander("真实数据预览与价格"):
             chosen = st.selectbox("预览快照", [s["id"] for s in snapshots])
             bars = store.read(store.get("snapshots", chosen)["paths"]["bars"])
@@ -337,8 +403,16 @@ if page == "数据同步":
             )
             st.dataframe(sample.tail(100), width="stretch", hide_index=True)
 
+elif page == "数据展示":
+    from alphagpt.visualization.kline_view import render_data_view
+
+    render_data_view(store)
+
 elif page == "因子挖掘":
-    st.subheader("模型配置与因子挖掘")
+    mining_factor_panel()
+    st.divider()
+    st.subheader("新建挖掘任务与参数配置")
+    st.info('新协议：模型仅使用训练开发区特征与反馈。验证区是冻结候选的独立检验；已观察区间会标记为重测。可计算不代表盈利有效。')
     options = profiles()
     name = st.selectbox("模型供应商配置", list(options))
     profile = options[name]
@@ -354,7 +428,8 @@ elif page == "因子挖掘":
             key=name + "_protocol",
         )
         output = st.number_input(
-            "单次输出 Token 上限", min_value=128, max_value=16000, value=profile.max_tokens
+            "单次模型输出上限（Token/次）", min_value=128, max_value=16000, value=profile.max_tokens,
+            help="每次请求最多允许模型生成的输出 Token 数；不包含输入，不是金额。实际输出可能更少；是否包含推理 Token 取决于供应商协议。"
         )
         model_timeout = st.number_input(
             "模型超时（秒）",
@@ -395,12 +470,47 @@ elif page == "因子挖掘":
     else:
         snapshot_id = st.selectbox("研究数据快照", [s["id"] for s in snapshots])
         snap = store.get("snapshots", snapshot_id)
-        viewed = [x for x in store.list("test_access") if x["config"]["snapshot"] == snapshot_id]
+        from alphagpt.data.futures import load_snapshot
+        from alphagpt.data.curves import prepare_curve
+        try:
+            source_data = load_snapshot(store, snapshot_id)
+        except ValueError as e:
+            st.error('该快照未通过质量检查：'+str(e))
+            st.info('请在数据同步页查看质量记录并修复来源数据，或选择其他已通过检查的快照。旧快照保持原样，不能填0或跳过异常日伪装通过。')
+            st.stop()
+        mapping_codes = sorted(source_data["mapping"].ts_code.unique())
+        choices = {}
+        for code in mapping_codes:
+            choices[code + "|causal_ratio"] = code + " 因果比例复权主连（推荐）"
+            choices[code + "|raw"] = code + " 原始未复权主连（仅作换月污染对照）"
+        for code, group in source_data["bars"].groupby("ts_code"):
+            if group.trade_date.max() > snap["start"] and group.trade_date.min() < snap["end"]:
+                choices[code + "|raw"] = code + " 真实月份合约原价"
+        choice = st.selectbox("用于因子挖掘的价格曲线", list(choices), format_func=choices.get, key="mine_curve")
+        curve_code, price_mode = choice.split("|")
+        feature_version = st.selectbox("特征版本", ["futures-v2", "legacy-v1"], format_func=lambda x: {"futures-v2":"期货增强版 v2（27项，区分原始方向与标准分）", "legacy-v1":"历史兼容版 v1（18项标准分）"}[x])
+        use_templates = st.checkbox("评估方案中的8个固定因子组合（不增加模型调用）", value=True)
+        st.caption("复权曲线按换月前一交易日已知价差衔接，生成独立版本；不改写原始行情。回测仍在真实月份合约原价上执行。")
+        if curve_code in mapping_codes and price_mode == "raw":
+            st.warning("未复权主连含换月价差，仅建议作为对照，不能把跳空当作可交易收益。")
+        if st.button("生成并登记所选研究曲线"):
+            try:
+                prepared, curve_id = prepare_curve(store, snapshot_id, source_data, curve_code, price_mode)
+                st.success("已保存独立研究曲线：" + curve_id)
+                st.dataframe(prepared["signal_curve"][["trade_date","mapping_ts_code","close","signal_close","adjustment","is_roll"]].tail(10).rename(columns={"trade_date":"交易日","mapping_ts_code":"实际合约","close":"原始收盘价","signal_close":"信号收盘价","adjustment":"调整系数","is_roll":"换月标志"}), hide_index=True)
+            except ValueError as e:
+                st.error(str(e))
+        viewed = store.list('holdout_access') + store.list("test_access")
         if viewed:
             st.warning(
-                f"此快照已有 {len(viewed)} 次测试区解封记录。若沿用已查看的区间继续调参，应按开发数据看待。"
+                f"系统已有 {len(viewed)} 条检验区间访问记录；按沪铜日期跨快照核对，重复区间不能恢复独立性。"
             )
         start, end = date.fromisoformat(snap["start"]), date.fromisoformat(snap["end"])
+        if curve_code not in mapping_codes:
+            monthly = source_data["bars"].loc[source_data["bars"].ts_code.eq(curve_code)]
+            start = max(start, date.fromisoformat(monthly.trade_date.min()))
+            end = min(end, date.fromisoformat(monthly.trade_date.max()))
+            st.info(f"固定月份合约可研究区间：{start}～{end}；预热和样本不足时会拒绝挖掘。")
         span = (end - start).days
         with st.form("mine_form"):
             cols = st.columns(4)
@@ -412,26 +522,34 @@ elif page == "因子挖掘":
                 max_value=end,
             )
             ve = cols[2].date_input(
-                "验证结束",
+                "独立验证结束",
                 value=start + timedelta(days=int(span * 0.8)),
                 min_value=start,
                 max_value=end,
             )
             xe = cols[3].date_input("测试结束", value=end, min_value=start, max_value=end)
-            cols = st.columns(4)
-            rounds = cols[0].number_input("挖掘轮数", min_value=1, max_value=20, value=1)
-            count = cols[1].number_input("每轮因子数", min_value=1, max_value=50, value=10)
-            calls = cols[2].number_input("模型调用总上限", min_value=1, max_value=100, value=6)
-            tokens = cols[3].number_input(
-                "任务 Token 预算", min_value=1000, max_value=2000000, value=50000, step=1000
-            )
+            cols = st.columns(3)
+            rounds = cols[0].number_input("挖掘轮数（轮/任务）", min_value=1, max_value=20, value=1, help="一个任务计划挖掘几轮；每轮通常发起一次生成请求。")
+            count = cols[1].number_input("每轮目标因子数（个/轮）", min_value=1, max_value=50, value=10, help="每轮要求模型生成的候选数，不保证全部通过校验；人工基线不计入该数量。")
+            calls = cols[2].number_input("模型调用保护上限（次/任务）", min_value=1, max_value=100, value=6, help="整个任务累计；包括失败请求和 JSON 修复请求。不会为了用完上限额外调用；建议至少覆盖轮数并留出修复余量。")
+            st.caption("单次生成长度由上方“模型高级参数 → 单次模型输出上限”控制，默认沿用供应商配置（通常为5,000 Token/次）。Token 是文本用量单位，不是元成本。")
+            with st.expander("任务累计用量保护（通常无需修改）"):
+                tokens = st.number_input(
+                    "累计输入与输出预算（Token/任务）", min_value=1000, max_value=2000000, value=500000, step=10000,
+                    help="默认500,000 Token，整个任务累计，恢复任务继续累计，不是每次调用，也不是人民币。调用前按已报告用量、粗略输入估计和本次输出上限检查，不能视为精确账单硬上限。"
+                )
+                st.caption("按整个任务累计输入与输出，恢复任务继续累计；不是每次调用，也不是人民币金额。默认500,000 Token仅作保护，不会自动消耗到该值。实际费用按供应商和模型计费规则计算；连接测试是独立任务。")
             direction = st.text_area(
                 "研究方向",
                 value="探索沪铜趋势、反转与量价持仓交互；每个公式必须附中文逻辑及失效条件。",
             )
+            with st.expander('研究计划与对照预算'):
+                candidate_budget = st.number_input('计划累计模型候选上限（个，跨同参数任务累计）',min_value=1,max_value=1000,value=30)
+                random_controls = st.number_input('固定种子随机合法对照（个，不调用模型）',min_value=0,max_value=30,value=3)
+                st.caption('模板、人工基线及随机对照共同用于训练区去重。生命周期字段仅作过滤/分层，默认不交给模型作为多空方向。')
             bt = backtest_controls("mine_")
             st.caption(
-                f"最多候选 {rounds * count} 个；快照 {snap['start']} ～ {snap['end']}。测试集默认封存，不参与生成反馈。默认成交额费率是可编辑的研究假设，并非实际账户报价。"
+                f"最多模型候选 {rounds * count} 个，另有2个人工基线和{8 if use_templates else 0}个方案模板；快照 {snap['start']} ～ {snap['end']}。测试集默认封存，不参与生成反馈。默认成交额费率是可编辑的研究假设，并非实际账户报价。"
             )
             if st.form_submit_button("开始因子挖掘", type="primary"):
                 try:
@@ -450,6 +568,11 @@ elif page == "因子挖掘":
                         int(tokens),
                         model=selected_model,
                         backtest=bt,
+                        curve=curve_code,
+                        price_mode=price_mode,
+                        feature_version=feature_version,
+                        use_templates=use_templates,
+                        candidate_budget=int(candidate_budget), random_controls=int(random_controls),
                     )
                     cfg.validate()
                     submit("mine", asdict(cfg))
@@ -478,9 +601,7 @@ else:
                     "名称": f.get("name_zh", "无效候选"),
                     "轮次": f["round"],
                     "来源": f["source"],
-                    "状态": {"accepted": "有效候选", "rejected": "已淘汰"}.get(
-                        f["status"], f["status"]
-                    ),
+                    "状态": factor_state(f),
                     "验证夏普": m.get("sharpe"),
                     "验证收益": m.get("total_return"),
                     "验证回撤": m.get("max_drawdown"),

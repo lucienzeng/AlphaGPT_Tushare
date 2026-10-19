@@ -39,7 +39,7 @@ class ModelClient:
                 api_key=key, base_url=profile.base_url, timeout=profile.timeout, max_retries=0
             )
 
-    def call(self, prompt: str, max_calls: int = 6, token_budget: int = 50000) -> str:
+    def call(self, prompt: str, max_calls: int = 6, token_budget: int = 500000) -> str:
         self.ctx.check()
         previous = [x for x in self.ctx.store.list("calls") if x["task"] == self.ctx.id]
         used = sum(x.get("total_tokens", 0) or 0 for x in previous)
@@ -112,10 +112,12 @@ class ModelClient:
 
 
 def generation_prompt(count: int, direction: str, feature_info: dict, feedback: list[dict]) -> str:
+    from alphagpt.factor.specs import SPECS, describe
+    feature_info = {name: describe(name) if name in SPECS else text for name,text in feature_info.items()}
     return f"""你是沪铜日频时间序列因子研究员。提出可证伪假设，不保证盈利。只返回 JSON 对象。
 研究方向：{direction}
-可用特征均按历史滚动均值标准差标准化，当前值在盘后才可得：{json.dumps(feature_info, ensure_ascii=False)}
-注意所有输入都是标准分，0表示历史均值，负数表示低于历史均值；波动率、成交量、持仓等标准分也可能为负。
+可用特征如下；非_raw及非生命周期标志列为历史标准分，_raw列保留原始方向，days_to_last_trade/days_since_roll为天数，is_roll为当日已发生标志。当前值在盘后才可得：{json.dumps(feature_info, ensure_ascii=False)}
+注意标准分列0表示历史均值，负数表示低于历史均值；波动率、成交量、持仓等标准分也可能为负。原始收益/持仓变化列正负才表示实际涨跌/增减。不得调用shift、访问标签、使用未来换月日期；方向、强度与风险门控须区分。每个组合最多4个基础特征。
 因此 tanh(volatility) 可能为负，不能解释为正向波动权重；若需非负门控可使用 (1+tanh(volatility))/2。
 中文解析必须解释标准分含义和每一项符号变化，不得把标准化特征当原始正数。
 只允许 + - * / 和 abs(x), tanh(x), sqrt_abs(x), sign(x), minimum(a,b), maximum(a,b)。
@@ -123,6 +125,6 @@ def generation_prompt(count: int, direction: str, feature_info: dict, feedback: 
 每个候选必须有完整中文逻辑，逐项解释公式中的输入/算子、预期方向、成立条件和局限。持仓增加不等于单向资金流入。
 生成 {count} 个不同因子；expected_direction 只能为1或-1；parent_factor_id 可为空。
 严格输出格式：{{"factors":[{{"name_zh":"中文名称","expression":"trend20 * tanh(volume_ratio)","logic_zh":"至少约80字、与公式一致的中文经济逻辑解析，明确这只是待验证假设。","expected_direction":1,"market_regime":"适用行情","failure_risks":"失效风险","parent_factor_id":null}}]}}
-下面仅为先前训练/验证反馈与淘汰原因，不含测试数据。禁止照抄已有公式，提出不同或改进的假设：
+下面仅为先前训练开发反馈与淘汰原因，不含独立验证或最终测试指标。禁止照抄已有公式，提出不同或改进的假设：
 {json.dumps(feedback[-30:], ensure_ascii=False)}
 """
